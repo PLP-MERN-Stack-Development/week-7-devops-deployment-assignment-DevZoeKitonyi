@@ -1,0 +1,70 @@
+name: Frontend CD
+
+on:
+  push:
+    branches: [ main ]
+    paths: ['frontend/**']
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Install dependencies
+      run: |
+        cd frontend
+        npm ci
+
+    - name: Build application
+      env:
+        REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+        REACT_APP_ENVIRONMENT: production
+      run: |
+        cd frontend
+        npm run build
+
+    # Deploy to Vercel
+    - name: Deploy to Vercel
+      if: ${{ secrets.VERCEL_TOKEN }}
+      uses: amondnet/vercel-action@v25
+      with:
+        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+        working-directory: ./frontend
+        vercel-args: '--prod'
+
+    # Alternative: Deploy to Netlify
+    - name: Deploy to Netlify
+      if: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      uses: nwtgck/actions-netlify@v2.0
+      with:
+        publish-dir: './frontend/build'
+        production-branch: main
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        deploy-message: "Deploy from GitHub Actions"
+        enable-pull-request-comment: false
+        enable-commit-comment: true
+        overwrites-pull-request-comment: true
+      env:
+        NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+
+    # Alternative: Deploy to GitHub Pages
+    - name: Deploy to GitHub Pages
+      if: ${{ !secrets.VERCEL_TOKEN && !secrets.NETLIFY_AUTH_TOKEN }}
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./frontend/build

@@ -1,0 +1,43 @@
+{
+    "name": "mern-deployment-project",
+    "version": "1.0.0",
+    "description": "Professional MERN Stack Application with DevOps Pipeline",
+    "main": "index.js",
+    "scripts": {
+      "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+      "server:dev": "cd backend && npm run dev",
+      "server:prod": "cd backend && npm start",
+      "client:dev": "cd frontend && npm start",
+      "client:build": "cd frontend && npm run build",
+      "build": "npm run client:build",
+      "test": "npm run test:backend && npm run test:frontend",
+      "test:backend": "cd backend && npm test",
+      "test:frontend": "cd frontend && npm test -- --coverage --watchAll=false",
+      "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+      "clean": "rm -rf node_modules backend/node_modules frontend/node_modules frontend/build",
+      "setup": "chmod +x scripts/setup.sh && ./scripts/setup.sh",
+      "deploy": "chmod +x scripts/deploy.sh && ./scripts/deploy.sh",
+      "health-check": "node monitoring/health-check.js",
+      "monitor": "node monitoring/uptime-monitor.js",
+      "lint": "npm run lint:backend && npm run lint:frontend",
+      "lint:backend": "cd backend && npm run lint",
+      "lint:frontend": "cd frontend && npm run lint",
+      "format": "npm run format:backend && npm run format:frontend",
+      "format:backend": "cd backend && npm run format",
+      "format:frontend": "cd frontend && npm run format"
+    },
+    "keywords": ["mern", "deployment", "devops", "ci-cd", "mongodb", "express", "react", "nodejs"],
+    "author": "Professional Developer",
+    "license": "MIT",
+    "engines": {
+      "node": ">=16.0.0",
+      "npm": ">=8.0.0"
+    },
+    "devDependencies": {
+      "concurrently": "^8.2.2"
+    },
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/your-username/mern-deployment-project.git"
+    }
+  }

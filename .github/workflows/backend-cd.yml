@@ -1,0 +1,59 @@
+name: Backend CD
+
+on:
+  push:
+    branches: [ main ]
+    paths: ['backend/**']
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+
+    - name: Install dependencies
+      run: |
+        cd backend
+        npm ci --only=production
+
+    # Deploy to Render
+    - name: Deploy to Render
+      if: ${{ secrets.RENDER_DEPLOY_HOOK }}
+      run: |
+        curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
+
+    # Alternative: Deploy to Railway
+    - name: Deploy to Railway
+      if: ${{ secrets.RAILWAY_TOKEN }}
+      uses: bervProject/railway-deploy@v1.0.0
+      with:
+        railway_token: ${{ secrets.RAILWAY_TOKEN }}
+        service: ${{ secrets.RAILWAY_SERVICE }}
+
+    # Alternative: Deploy to Heroku
+    - name: Deploy to Heroku
+      if: ${{ secrets.HEROKU_API_KEY }}
+      uses: akhileshns/heroku-deploy@v3.12.12
+      with:
+        heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+        heroku_app_name: ${{ secrets.HEROKU_APP_NAME }}
+        heroku_email: ${{ secrets.HEROKU_EMAIL }}
+        appdir: "backend"
+
+    # Health check after deployment
+    - name: Health check
+      run: |
+        sleep 30
+        if [ "${{ secrets.BACKEND_URL }}" ]; then
+          curl -f ${{ secrets.BACKEND_URL }}/health || exit 1
+        fi
